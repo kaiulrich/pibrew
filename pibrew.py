@@ -3,6 +3,12 @@
 from os import system
 import curses
 import configparser
+import atexit
+
+def my_cleanup(name):
+    print (name)
+
+atexit.register(my_cleanup, 'first')
 
 
 def get_sensor_temp(sensor_temp):
@@ -21,6 +27,7 @@ def paint_screen(screen, recipe, config, currentTemp, currentTime, active_phase)
           if phase != 'Main':
                temp = config.getfloat(phase, 'temp')
                temp_div = currentTemp - temp
+
                time = config.getint(phase, 'time')
                time_div = time - currentTime
                if time_div < 0:
@@ -65,9 +72,9 @@ def show_recept(screen, config):
      phases = config.sections()
 
      active_phase = phases[2]
-
-     currentTemp = 0
-     currentTime = 0
+	
+     currentTemp = 15
+     currentTime = 12
      
      y = 0
 
@@ -75,7 +82,10 @@ def show_recept(screen, config):
      while y != ord('0'):
           currentTemp = get_sensor_temp(currentTemp)
           currentTime = 12
+		
+          atexit.register(my_cleanup, str(currentTemp))
           paint_screen(screen, recipe, config, currentTemp, currentTime, active_phase)
+	
           y = screen.getch()
 
 
