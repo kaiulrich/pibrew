@@ -43,7 +43,7 @@ class Timer:
 class Termometer:
       def __init__(self):
           self.phase_reached = 0
-          self.sensor_temp = 0.0
+          self.sensor_temp = 43.0
           self.phase_temp = 0.0         
 
       def start(self, phase_temp):
@@ -115,7 +115,15 @@ def paint_screen(screen, recipe, config, termometer, timer, active_phase):
      screen.addstr(8 + (phase_num * 2) + 2, 2, "Please enter '0' to exit")
      screen.refresh()
 
+def initPhase(config, phase_index, timer, termometer):
+     phases = config.sections()
+     active_phase = phases[phase_index]
 
+     time = config.getint(active_phase, 'time')
+     temp = config.getint(active_phase, 'temp')
+     timer.start(time)
+     termometer.start(temp)
+     return active_phase
 
 def show_recept(screen, config):
      refresh_interval = int(config['Main']['refresh_interval'])
@@ -123,22 +131,25 @@ def show_recept(screen, config):
       
      recipe = config['Main']['recipe']
      phases = config.sections()
+     num_of_phases = len(phases)
 
-     active_phase = phases[2]
-     time = config.getint(active_phase, 'time')
-     temp = config.getint(active_phase, 'temp')
-                    
+     phase_index = 1
      timer = Timer()
-     timer.start(time)
-
      termometer = Termometer()
-     termometer.start(temp)
+     active_phase = initPhase(config, phase_index, timer, termometer)               
 
-     
      y = 0
 
      while y != ord('0'):    
           termometer.read_sensor_temp()
+
+          if termometer.phase_reached and not timer.running:
+                timer.start(time)
+
+          if timer.isFinish() and phase_index < num_of_phases:
+               phase_index = phase_index + 1  
+               active_phase = initPhase(config, phase_index, timer, termometer)              
+ 
           paint_screen(screen, recipe, config, termometer, timer, active_phase)
           y = screen.getch()
 
