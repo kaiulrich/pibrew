@@ -28,7 +28,6 @@ class Timer:
            else:
                 return t
 
-
       def isFinish(self):
            if self.running == 1 and self.time() > self.time_to_run * 60 :
                 return 1
@@ -39,26 +38,50 @@ class Timer:
           if self.isFinish():
                return 0
           else:
-               return self.time_to_run - self.time()
+               return int(self.time_to_run - self.time())
 
-        
+class Termometer:
+      def __init__(self):
+          self.phase_reached = 0
+          self.sensor_temp = 0.0
+          self.phase_temp = 0.0         
 
-def get_sensor_temp(sensor_temp):
-     sensor_temp = sensor_temp + 1
-     return sensor_temp
+      def start(self, phase_temp):
+           self.phase_reached = 0
+           self.phase_temp = phase_temp
+           
 
-def paint_screen(screen, recipe, config, currentTemp, timer, active_phase):
+      def stop(self):
+           self.phase_reached = 0
+           self.sensor_temp = 0
+           self.phase_temp = 0
+
+
+      def read_sensor_temp(self):
+           self.sensor_temp = self.sensor_temp + 1
+   
+           if(not self.phase_reached and self.sensor_temp >= self.phase_temp):
+                self.phase_reached = 1
+
+      def temp_div(self):
+           return self.sensor_temp - self.phase_temp
+
+
+
+
+
+def paint_screen(screen, recipe, config, termometer, timer, active_phase):
      screen.clear()
      screen.border(0)
      screen.addstr(2, 2, "Pi-Brew")
      screen.addstr(4, 2, "Running recipe " + recipe)
-     screen.addstr(4, 30, "Temperatur: " + str(currentTemp) + " °C" )
+     screen.addstr(4, 30, "Temperatur: " + str(termometer.sensor_temp) + " °C" )
      phase_num = 0
 
      for phase in config.sections():
           if phase != 'Main':
                temp = config.getint(phase, 'temp')
-               temp_div = currentTemp - temp
+               temp_div = termometer.temp_div()
 
                time = config.getint(phase, 'time')
                time_div = timer.time_left()
@@ -101,19 +124,22 @@ def show_recept(screen, config):
      recipe = config['Main']['recipe']
      phases = config.sections()
 
-     active_phase = phases[1]
+     active_phase = phases[2]
      time = config.getint(active_phase, 'time')
+     temp = config.getint(active_phase, 'temp')
                     
      timer = Timer()
      timer.start(time)
 
-     currentTemp = 0
+     termometer = Termometer()
+     termometer.start(temp)
+
      
      y = 0
 
      while y != ord('0'):    
-          currentTemp = get_sensor_temp(currentTemp)
-          paint_screen(screen, recipe, config, currentTemp, timer, active_phase)
+          termometer.read_sensor_temp()
+          paint_screen(screen, recipe, config, termometer, timer, active_phase)
           y = screen.getch()
 
 
