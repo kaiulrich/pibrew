@@ -3,19 +3,51 @@
 from os import system
 import curses
 import configparser
-import atexit
+import time
 
-def my_cleanup(name):
-    print (name)
+class Timer:
+      def __init__(self):
+           self.running = 0
+           self.start_time = 0
+           self.time_to_run = 0
+        
+      def start(self, time_to_run):
+           self.running = 1
+           self.start_time = time.time()
+           self.time_to_run = time_to_run
 
-atexit.register(my_cleanup, 'first')
+      def stop(self):
+           self.running = 0
+           self.start_time = 0
+           self.time_to_run = 0
+ 
+      def time(self):
+           t = (time.time() - self.start_time) / 60
+           if t > self.time_to_run:
+                return self.time_to_run
+           else:
+                return t
 
+
+      def isFinish(self):
+           if self.running == 1 and self.time() > self.time_to_run * 60 :
+                return 1
+           else :
+                return 0   
+   
+      def time_left(self):
+          if self.isFinish():
+               return 0
+          else:
+               return self.time_to_run - self.time()
+
+        
 
 def get_sensor_temp(sensor_temp):
      sensor_temp = sensor_temp + 1
      return sensor_temp
 
-def paint_screen(screen, recipe, config, currentTemp, currentTime, active_phase):
+def paint_screen(screen, recipe, config, currentTemp, timer, active_phase):
      screen.clear()
      screen.border(0)
      screen.addstr(2, 2, "Pi-Brew")
@@ -25,13 +57,11 @@ def paint_screen(screen, recipe, config, currentTemp, currentTime, active_phase)
 
      for phase in config.sections():
           if phase != 'Main':
-               temp = config.getfloat(phase, 'temp')
+               temp = config.getint(phase, 'temp')
                temp_div = currentTemp - temp
 
                time = config.getint(phase, 'time')
-               time_div = time - currentTime
-               if time_div < 0:
-                     time_div = 0
+               time_div = timer.time_left()
 
                continue_manual = config.get(phase, 'continue_manual')
                action = config.get(phase, 'action')
@@ -71,21 +101,19 @@ def show_recept(screen, config):
      recipe = config['Main']['recipe']
      phases = config.sections()
 
-     active_phase = phases[2]
-	
-     currentTemp = 15
-     currentTime = 12
+     active_phase = phases[1]
+     time = config.getint(active_phase, 'time')
+                    
+     timer = Timer()
+     timer.start(time)
+
+     currentTemp = 0
      
      y = 0
 
- 
-     while y != ord('0'):
+     while y != ord('0'):    
           currentTemp = get_sensor_temp(currentTemp)
-          currentTime = 12
-		
-          atexit.register(my_cleanup, str(currentTemp))
-          paint_screen(screen, recipe, config, currentTemp, currentTime, active_phase)
-	
+          paint_screen(screen, recipe, config, currentTemp, timer, active_phase)
           y = screen.getch()
 
 
