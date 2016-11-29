@@ -112,38 +112,53 @@ class Recipe:
            self.phases = config.sections()
            self.phase_index = 1
 
-      def get_name():
-            return config.get('Main', 'recipe')
+      def get_phases():
+           return self.phases
 
       def get_name():
-            return config.getint('Main', 'refresh_interval')
+           return config.get('Main', 'recipe')
 
-      def	get_active_phase():
-            return self.phases[phase_index]
+      def get_name():
+           return config.getint('Main', 'refresh_interval')
+
+      def get_active_phase():
+           return self.phases[phase_index]
       
       def get_active_time(self):
-            return self.config.getint(get_active_phase(), 'time')
+           return self.config.getint(get_active_phase(), 'time')
 
       def get_active_temp(self):
-            return self.config.getint(get_active_phase(), 'temp')
+           return self.config.getint(get_active_phase(), 'temp')
 
       def get_active_continue_manual(self):
-            return self.config.get(get_active_phase(), 'continue_manual')
+           return self.config.get(get_active_phase(), 'continue_manual')
 
       def get_active_action(self):
-            return self.config.get(get_active_phase(), 'action')
+           return self.config.get(get_active_phase(), 'action')
 
 
       def hasNextPhase(self):
-            if phase_index < len(phases):
-                  return 1
-            else:
-                  return 0
+           if phase_index < len(phases):
+                 return 1
+           else:
+                 return 0
 
       def next(self):
-            self.phase_index = phase_index + 1
+           self.phase_index = phase_index + 1
       
-      
+class Heater:
+      def __init__(self):
+           self.heater_on = 0
+
+      def heater_on(self):
+           self.heater_on = 1
+
+      def heater_off(self):
+          self.heater_on = 0
+
+      def is_heater_on(self):
+           return self.heater_on
+
 
 def getMinAndSek(secs):
      minutes = int((secs % 3600 ) / 60)
