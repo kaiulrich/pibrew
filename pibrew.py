@@ -14,7 +14,7 @@ class Timer:
       def start(self, phase_end):
            self.started = 1
            self.start_time = time.time()
-           self.phase_end = phase_end
+           self.phase_end = phase_end * 60
 
       def stop(self):
            self.started = 0
@@ -22,7 +22,7 @@ class Timer:
            self.phase_end = 0
  
       def time_done(self):
-           _time_done = (time.time() - self.start_time) / 60
+           _time_done = int(time.time() - self.start_time)
            _end = self.phase_end
            if _time_done > _end:
                 return _end
@@ -32,7 +32,7 @@ class Timer:
       def isFinish(self):
            if (self.started == 0):
                 return 0
-           elif self.time_done() >= (self.phase_end * 60) :
+           elif self.time_done() >= self.phase_end :
                 return 1
            else :
                 return 0   
@@ -41,7 +41,7 @@ class Timer:
           if self.isFinish():
                return 0
           else:
-               return self.phase_end - self.time_done()
+               return int(self.phase_end - self.time_done())
 
       def get_started(self):
           return self.started
@@ -54,30 +54,44 @@ class Timer:
 
 class Termometer:
       def __init__(self):
+          self.up = 1
           self.phase_reached = 0
           self.sensor_temp = 43.0
           self.phase_temp = 0.0         
 
       def start(self, phase_temp):
+           self.up = 1
            self.phase_reached = 0
-           self.sensor_temp = 43.0
+           #self.sensor_temp = 43.0
            self.phase_temp = phase_temp
            
 
       def stop(self):
+           self.up = 0
            self.phase_reached = 0
            self.sensor_temp = 0
            self.phase_temp = 0
 
 
       def read_sensor_temp(self):
-           self.sensor_temp = self.sensor_temp + 1
+           self.sensor_temp = self.sensor_temp + self.up
    
            if(not self.phase_reached and self.sensor_temp >= self.phase_temp):
                 self.phase_reached = 1
 
       def temp_div(self):
            return self.sensor_temp - self.phase_temp
+
+
+
+      def goUp(self):
+           self.up = 1
+
+      def goDown(self):
+           self.up = -1
+
+      def doStay(self):
+           self.up = 0
 
 
       def get_phase_reached(self):
@@ -88,6 +102,10 @@ class Termometer:
 
       def get_phase_temp(self):
            return self.phase_temp
+
+      def get_up(self):
+           return self.up
+
 
 def paint_screen(screen, recipe, config, termometer, timer, active_phase):
      screen.clear()
@@ -114,7 +132,7 @@ def paint_screen(screen, recipe, config, termometer, timer, active_phase):
                
                if phase == active_phase:
                     screen.addstr(8 + (phase_num * 2), 40,  str(temp_div) + '°C')
-                    screen.addstr(8 + (phase_num * 2), 60,  str(time_div) + ' min')
+                    screen.addstr(8 + (phase_num * 2), 60,  str(time_div) + ' s')
 			
 
                if continue_manual == '0':
@@ -156,20 +174,22 @@ def show_recept(screen, config):
      timer = Timer()
      termometer = Termometer()
      active_phase = initPhase(config, phase_index, timer, termometer)               
-     _start_time = config.getint(active_phase, 'time') 
-
+     
      y = 0
 
      while y != ord('0'):    
           termometer.read_sensor_temp()
 
           if ((termometer.get_phase_reached()) and (not timer.get_started())):
+                _start_time = config.getint(active_phase, 'time') 
                 timer.start(int(_start_time))
+                termometer.doStay()
 
-          if timer.isFinish():
+          if timer.isFinish() and phase_index < num_of_phases - 1:
                phase_index = phase_index + 1  
-               active_phase = initPhase(config, phase_index, timer, termometer)              
- 
+               active_phase = initPhase(config, phase_index, timer, termometer)    
+               termometer.goUp()
+
           paint_screen(screen, recipe, config, termometer, timer, active_phase)
           y = screen.getch()
 
