@@ -106,6 +106,13 @@ class Termometer:
       def get_up(self):
            return self.up
 
+def getMinAndSek(secs):
+     minutes = int((secs % 3600 ) / 60)
+     seconds = secs % 60
+     if(minutes == 0 and seconds == 0):
+          return "--:--"
+     else:
+          return  '{:>3}:{:0>2}'.format(minutes, seconds)
 
 def paint_screen(screen, recipe, config, termometer, timer, active_phase):
      screen.clear()
@@ -132,7 +139,7 @@ def paint_screen(screen, recipe, config, termometer, timer, active_phase):
                
                if phase == active_phase:
                     screen.addstr(8 + (phase_num * 2), 40,  str(temp_div) + '°C')
-                    screen.addstr(8 + (phase_num * 2), 60,  str(time_div) + ' s')
+                    screen.addstr(8 + (phase_num * 2), 58,  getMinAndSek(time_div) + ' min')
 			
 
                if continue_manual == '0':
