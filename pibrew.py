@@ -106,6 +106,45 @@ class Termometer:
       def get_up(self):
            return self.up
 
+class Recipe:
+      def __init__(self, config):
+           self.config = config
+           self.phases = config.sections()
+           self.phase_index = 1
+
+      def get_name():
+            return config.get('Main', 'recipe')
+
+      def get_name():
+            return config.getint('Main', 'refresh_interval')
+
+      def	get_active_phase():
+            return self.phases[phase_index]
+      
+      def get_active_time(self):
+            return self.config.getint(get_active_phase(), 'time')
+
+      def get_active_temp(self):
+            return self.config.getint(get_active_phase(), 'temp')
+
+      def get_active_continue_manual(self):
+            return self.config.get(get_active_phase(), 'continue_manual')
+
+      def get_active_action(self):
+            return self.config.get(get_active_phase(), 'action')
+
+
+      def hasNextPhase(self):
+            if phase_index < len(phases):
+                  return 1
+            else:
+                  return 0
+
+      def next(self):
+            self.phase_index = phase_index + 1
+      
+      
+
 def getMinAndSek(secs):
      minutes = int((secs % 3600 ) / 60)
      seconds = secs % 60
