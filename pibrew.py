@@ -7,29 +7,32 @@ import time
 
 class Timer:
       def __init__(self):
-           self.running = 0
+           self.started = 0
            self.start_time = 0
-           self.time_to_run = 0
+           self.phase_end = 0
         
-      def start(self, time_to_run):
-           self.running = 1
+      def start(self, phase_end):
+           self.started = 1
            self.start_time = time.time()
-           self.time_to_run = time_to_run
+           self.phase_end = phase_end
 
       def stop(self):
-           self.running = 0
+           self.started = 0
            self.start_time = 0
-           self.time_to_run = 0
+           self.phase_end = 0
  
-      def time(self):
-           t = (time.time() - self.start_time) / 60
-           if t > self.time_to_run:
-                return self.time_to_run
+      def time_done(self):
+           _time_done = (time.time() - self.start_time) / 60
+           _end = self.phase_end
+           if _time_done > _end:
+                return _end
            else:
-                return t
+                return _time_done
 
       def isFinish(self):
-           if self.running == 1 and self.time() > self.time_to_run * 60 :
+           if (self.started == 0):
+                return 0
+           elif self.time_done() >= (self.phase_end * 60) :
                 return 1
            else :
                 return 0   
@@ -38,7 +41,16 @@ class Timer:
           if self.isFinish():
                return 0
           else:
-               return int(self.time_to_run - self.time())
+               return self.phase_end - self.time_done()
+
+      def get_started(self):
+          return self.started
+
+      def get_start_time(self):
+          return self.start_time
+
+      def get_phase_end(self):
+          return self.phase_end
 
 class Termometer:
       def __init__(self):
@@ -48,6 +60,7 @@ class Termometer:
 
       def start(self, phase_temp):
            self.phase_reached = 0
+           self.sensor_temp = 43.0
            self.phase_temp = phase_temp
            
 
@@ -67,8 +80,14 @@ class Termometer:
            return self.sensor_temp - self.phase_temp
 
 
+      def get_phase_reached(self):
+           return self.phase_reached
 
+      def get_sensor_temp(self):
+           return self.sensor_temp
 
+      def get_phase_temp(self):
+           return self.phase_temp
 
 def paint_screen(screen, recipe, config, termometer, timer, active_phase):
      screen.clear()
@@ -121,7 +140,7 @@ def initPhase(config, phase_index, timer, termometer):
 
      time = config.getint(active_phase, 'time')
      temp = config.getint(active_phase, 'temp')
-     timer.start(time)
+     timer.stop()
      termometer.start(temp)
      return active_phase
 
@@ -137,16 +156,17 @@ def show_recept(screen, config):
      timer = Timer()
      termometer = Termometer()
      active_phase = initPhase(config, phase_index, timer, termometer)               
+     _start_time = config.getint(active_phase, 'time') 
 
      y = 0
 
      while y != ord('0'):    
           termometer.read_sensor_temp()
 
-          if termometer.phase_reached and not timer.running:
-                timer.start(time)
+          if ((termometer.get_phase_reached()) and (not timer.get_started())):
+                timer.start(int(_start_time))
 
-          if timer.isFinish() and phase_index < num_of_phases:
+          if timer.isFinish():
                phase_index = phase_index + 1  
                active_phase = initPhase(config, phase_index, timer, termometer)              
  
