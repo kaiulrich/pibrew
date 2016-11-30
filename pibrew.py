@@ -112,39 +112,51 @@ class Recipe:
            self.phases = config.sections()
            self.phase_index = 1
 
-      def get_phases():
+      def get_phases(self):
            return self.phases
 
-      def get_name():
-           return config.get('Main', 'recipe')
+      def get_name(self):
+           return self.config.get('Main', 'recipe')
 
-      def get_name():
-           return config.getint('Main', 'refresh_interval')
+      def get_refresh_interval(self):
+           return self.config.getint('Main', 'refresh_interval')
 
-      def get_active_phase():
-           return self.phases[phase_index]
+      def get_active_phase(self):
+           return self.phases[self.phase_index]
       
       def get_active_time(self):
-           return self.config.getint(get_active_phase(), 'time')
+           return self.config.getint(self.get_active_phase(), 'time')
+
+      def get_time(self, phase):
+           return self.config.getint(phase, 'time')
 
       def get_active_temp(self):
-           return self.config.getint(get_active_phase(), 'temp')
+           return self.config.getint(self.get_active_phase(), 'temp')
+
+      def get_temp(self, phase):
+           return self.config.getint(phase, 'temp')
 
       def get_active_continue_manual(self):
-           return self.config.get(get_active_phase(), 'continue_manual')
+           return self.config.get(self.get_active_phase(), 'continue_manual')
+
+      def get_continue_manual(self, phase):
+           return self.config.get(phase, 'continue_manual')
 
       def get_active_action(self):
-           return self.config.get(get_active_phase(), 'action')
+           return self.config.get(self.get_active_phase(), 'action')
+
+      def get_action(self, phase):
+           return self.config.get(phase, 'action')
 
 
       def hasNextPhase(self):
-           if phase_index < len(phases):
+           if self.phase_index < len(self.phases):
                  return 1
            else:
                  return 0
 
       def next(self):
-           self.phase_index = phase_index + 1
+           self.phase_index = self.phase_index + 1
       
 class Heater:
       def __init__(self):
@@ -155,6 +167,9 @@ class Heater:
 
       def heater_off(self):
           self.heater_on = 0
+
+      def heater_toggle(self):
+          self.heater_on = not self.heater_on
 
       def is_heater_on(self):
            return self.heater_on
@@ -168,30 +183,30 @@ def getMinAndSek(secs):
      else:
           return  '{:>3}:{:0>2}'.format(minutes, seconds)
 
-def paint_screen(screen, recipe, config, termometer, timer, active_phase):
+def paint_screen(screen, recipe, termometer, timer):
      screen.clear()
      screen.border(0)
      screen.addstr(2, 2, "Pi-Brew")
-     screen.addstr(4, 2, "Running recipe " + recipe)
+     screen.addstr(4, 2, "Running recipe " + recipe.get_name())
      screen.addstr(4, 30, "Temperatur: " + str(termometer.sensor_temp) + " °C" )
      phase_num = 0
 
-     for phase in config.sections():
+     for phase in recipe.get_phases():
           if phase != 'Main':
-               temp = config.getint(phase, 'temp')
+               temp = recipe.get_temp(phase)
                temp_div = termometer.temp_div()
 
-               time = config.getint(phase, 'time')
+               time = recipe.get_time(phase)
                time_div = timer.time_left()
 
-               continue_manual = config.get(phase, 'continue_manual')
-               action = config.get(phase, 'action')
+               continue_manual = recipe.get_continue_manual(phase)
+               action = recipe.get_action(phase)
 			
                screen.addstr(8 + (phase_num * 2), 2, phase)
                screen.addstr(8 + (phase_num * 2), 30,  str(temp) + '°C')
                screen.addstr(8 + (phase_num * 2), 50,  str(time) + ' min')
                
-               if phase == active_phase:
+               if phase == recipe.get_active_phase():
                     screen.addstr(8 + (phase_num * 2), 40,  str(temp_div) + '°C')
                     screen.addstr(8 + (phase_num * 2), 58,  getMinAndSek(time_div) + ' min')
 			
@@ -213,28 +228,18 @@ def paint_screen(screen, recipe, config, termometer, timer, active_phase):
      screen.addstr(8 + (phase_num * 2) + 2, 2, "Please enter '0' to exit")
      screen.refresh()
 
-def initPhase(config, phase_index, timer, termometer):
-     phases = config.sections()
-     active_phase = phases[phase_index]
-
-     time = config.getint(active_phase, 'time')
-     temp = config.getint(active_phase, 'temp')
+def initPhase(recipe, timer, termometer):
      timer.stop()
+     temp = recipe.get_active_temp()
      termometer.start(temp)
-     return active_phase
-
-def show_recept(screen, config):
-     refresh_interval = int(config['Main']['refresh_interval'])
+ 
+def show_recept(screen, recipe):
+     refresh_interval = recipe.get_refresh_interval()
      screen.timeout(refresh_interval * 1000)
       
-     recipe = config['Main']['recipe']
-     phases = config.sections()
-     num_of_phases = len(phases)
-
-     phase_index = 1
      timer = Timer()
      termometer = Termometer()
-     active_phase = initPhase(config, phase_index, timer, termometer)               
+     initPhase(recipe, timer, termometer)               
      
      y = 0
 
@@ -242,22 +247,23 @@ def show_recept(screen, config):
           termometer.read_sensor_temp()
 
           if ((termometer.get_phase_reached()) and (not timer.get_started())):
-                _start_time = config.getint(active_phase, 'time') 
+                _start_time = recipe.get_active_time()
                 timer.start(int(_start_time))
                 termometer.doStay()
 
-          if timer.isFinish() and phase_index < num_of_phases - 1:
-               phase_index = phase_index + 1  
-               active_phase = initPhase(config, phase_index, timer, termometer)    
+          if timer.isFinish() and recipe.hasNextPhase():
+               recipe.next()
+               initPhase(recipe, timer, termometer)    
                termometer.goUp()
 
-          paint_screen(screen, recipe, config, termometer, timer, active_phase)
+          paint_screen(screen, recipe, termometer, timer)
           y = screen.getch()
 
 
 def main(args):
      config = configparser.ConfigParser()
      config.read('pibrew.ini')
+     recipe = Recipe(config)
      x = 0
      while x != ord('3'):
           screen = curses.initscr()
@@ -277,10 +283,11 @@ def main(args):
           x = screen.getch()
 
           if x == ord('1'):
-               show_recept(screen, config)
+               recipe = Recipe(config)
+               show_recept(screen, recipe)
 
           if x == ord('2'):
-              show_recept(screen, config)
+              show_recept(screen, recipe)
 
      curses.endwin()
 
