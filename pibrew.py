@@ -156,7 +156,7 @@ class Recipe:
            return self.config.get(phase, 'continue_manual')
 
       def get_active_action(self):
-           return self.config.get(self.get_active_phase(), 'action')
+           return self.config.getint(self.get_active_phase(), 'action')
 
       def get_action(self, phase):
            return self.config.get(phase, 'action')
@@ -173,19 +173,47 @@ class Recipe:
       
 class Heater:
       def __init__(self):
-           self.heater_on = 0
+           self.heating = 0
 
       def heater_on(self):
-           self.heater_on = 1
+           self.heating = 1
 
       def heater_off(self):
-          self.heater_on = 0
+          self.heating = 0
 
       def heater_toggle(self):
-          self.heater_on = not self.heater_on
+          self.heating = not self.heating
 
-      def is_heater_on(self):
-           return self.heater_on
+      def is_heating(self):
+           return self.heating
+
+class Beeper:
+      def __init__(self):
+           self.beeping = 0
+           self.active = 1
+
+      def beeping_on(self):
+           self.beeping = 1
+
+      def beeping_off(self):
+          self.beeping = 0
+
+      def beeping_toggle(self):
+          self.beeping = not self.beeping
+
+      def set_unactive(self):
+          self.active = 0
+
+      def set_active(self):
+          self.active = 1
+
+      def is_active(self):
+           return self.active
+
+      def is_beeping(self):
+           return self.beeping
+
+	 
 
 
 def getMinAndSek(secs):
@@ -196,15 +224,25 @@ def getMinAndSek(secs):
      else:
           return  '{:>3}:{:0>2}'.format(minutes, seconds)
 
-def paint_screen(screen, recipe, termometer, timer):
+def paint_screen(screen, recipe, termometer, timer, heater, beeper):
      screen.clear()
      screen.border(0)
      screen.addstr(2, 2, "Pi-Brew")
      screen.addstr(4, 2, "Running recipe " + recipe.get_name())
      screen.addstr(4, 30, "Temperatur: " + str(termometer.sensor_temp) + " °C" )
      screen.addstr(4, 55, "Gesammtzeit: " + getMinAndSek(int(timer.get_total_time())) + " min" )
-     if timer.isFinish() and not recipe.hasNextPhase():
-           screen.addstr(5, 30, "DONE ....." )
+
+     if heater.is_heating():
+          screen.addstr(6, 30, "Heater: ON" )
+     else:
+          screen.addstr(6, 30, "Heater: OFF" )
+
+     if beeper.is_beeping():
+          screen.addstr(6, 55, "Beeper: ON" )
+     else:
+          screen.addstr(6, 55, "Beeper: OFF" )
+
+
 
      phase_num = 0
 
@@ -219,30 +257,34 @@ def paint_screen(screen, recipe, termometer, timer):
                continue_manual = recipe.get_continue_manual(phase)
                action = recipe.get_action(phase)
 			
-               screen.addstr(8 + (phase_num * 2), 2, phase)
-               screen.addstr(8 + (phase_num * 2), 30,  str(temp) + '°C')
-               screen.addstr(8 + (phase_num * 2), 50,  str(time) + ' min')
+               screen.addstr(9 + (phase_num * 2), 2, phase)
+               screen.addstr(9 + (phase_num * 2), 30,  str(temp) + '°C')
+               screen.addstr(9 + (phase_num * 2), 50,  str(time) + ' min')
                
                if phase == recipe.get_active_phase():
-                    screen.addstr(8 + (phase_num * 2), 40,  str(temp_div) + '°C')
-                    screen.addstr(8 + (phase_num * 2), 58,  getMinAndSek(time_div) + ' min')
+                    screen.addstr(9 + (phase_num * 2), 40,  str(temp_div) + '°C')
+                    screen.addstr(9 + (phase_num * 2), 58,  getMinAndSek(time_div) + ' min')
 			
 
                if continue_manual == '0':
-                    screen.addstr(8 + (phase_num * 2), 70, 'auto')
+                    screen.addstr(9 + (phase_num * 2), 70, 'auto')
                else:
-                    screen.addstr(8 + (phase_num * 2), 70, 'manuel')
+                    screen.addstr(9 + (phase_num * 2), 70, 'manuel')
 
                if action == '1':
-                    screen.addstr(8 + (phase_num * 2), 80, 'Alert')
+                    screen.addstr(9 + (phase_num * 2), 80, 'Alert')
                elif action == '2':
-                     screen.addstr(8 + (phase_num * 2), 80, 'End')
+                     screen.addstr(9 + (phase_num * 2), 80, 'End')
                else:
-                     screen.addstr(8 + (phase_num * 2), 80, ' - ')
+                     screen.addstr(9 + (phase_num * 2), 80, ' - ')
                      
                phase_num = phase_num + 1
 
-     screen.addstr(8 + (phase_num * 2) + 2, 2, "Please enter '0' to exit")
+     
+     if timer.isFinish() and not recipe.hasNextPhase():
+         screen.addstr(9 + (phase_num * 2) + 2, 2, "========== DONE ==========")
+
+     screen.addstr(9 + (phase_num * 2) + 4, 2, "Please enter '0' to exit")
      screen.refresh()
 
 def initPhase(recipe, timer, termometer):
@@ -256,28 +298,46 @@ def show_recept(screen, recipe):
       
      timer = Timer()
      termometer = Termometer()
+     heater = Heater()
+     beeper = Beeper()
+
      initPhase(recipe, timer, termometer)               
      
      y = 0
 
      while y != ord('0'):    
           termometer.read_sensor_temp()
+          
+          if(y == ord(' ')):
+                beeper.beeping_off()
 
           if ((termometer.get_phase_reached()) and (not timer.get_started())):
                 _start_time = recipe.get_active_time()
                 timer.start(int(_start_time))
                 termometer.doStay()
 
+          if(termometer.temp_div() >= 0.0 ):           
+               heater.heater_off()
+          else:
+               heater.heater_on()
+          
           if timer.isFinish() and recipe.hasNextPhase():
+               if(recipe.get_active_action() > 0):
+                    beeper.beeping_on()
+
                recipe.next()
                initPhase(recipe, timer, termometer)    
                termometer.goUp()
 
+              
           if timer.isFinish() and not recipe.hasNextPhase():
                timer.stop_total_time()
+               
+               if beeper.is_active():
+                    beeper.beeping_on()
+                    beeper.set_unactive()
 
-
-          paint_screen(screen, recipe, termometer, timer)
+          paint_screen(screen, recipe, termometer, timer, heater, beeper)
           y = screen.getch()
 
 
