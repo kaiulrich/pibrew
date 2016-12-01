@@ -119,11 +119,13 @@ class Termometer:
       def get_up(self):
            return self.up
 
+
 class Recipe:
       def __init__(self, config):
            self.config = config
            self.phases = config.sections()
            self.phase_index = 1
+           self.waiting = 0
 
       def get_phases(self):
            return self.phases
@@ -160,6 +162,15 @@ class Recipe:
 
       def get_action(self, phase):
            return self.config.get(phase, 'action')
+
+      def set_waiting(self):
+          self.waiting = 1
+
+      def end_waiting(self):
+          self.waiting = 0
+
+      def is_waiting(self):
+           return self.waiting
 
 
       def hasNextPhase(self):
@@ -284,9 +295,15 @@ def paint_screen(screen, recipe, termometer, timer, heater, beeper):
      if timer.isFinish() and not recipe.hasNextPhase():
          screen.addstr(9 + (phase_num * 2) + 2, 2, "========== DONE ==========")
 
-     screen.addstr(9 + (phase_num * 2) + 4, 2, "Please enter '0' to exit.")
+     message = "Press '0' to exit."
      if beeper.is_beeping():
-         screen.addstr(9 + (phase_num * 2) + 4, 30, "To stop beeper hit <SPACE>.")
+         message = message + "    Press 'SPACE' to stop beep."
+ 
+     if recipe.is_waiting():
+         message = message + "    Press 'c' to end active phase."
+ 
+     screen.addstr(9 + (phase_num * 2) + 4, 2, message)
+     
      screen.refresh()
 
 def initPhase(recipe, timer, termometer, beeper):
@@ -294,6 +311,7 @@ def initPhase(recipe, timer, termometer, beeper):
      temp = recipe.get_active_temp()
      termometer.start(temp)
      beeper.set_active()
+     recipe.end_waiting()
  
 def show_recept(screen, recipe):
      refresh_interval = recipe.get_refresh_interval()
@@ -321,29 +339,36 @@ def show_recept(screen, recipe):
           
           # Ist die Zieltemperatur erreicht und der Phasenzeit hat noch nicht begonnen,
           # DANN starte den Phasen timer
-          if ((termometer.get_phase_reached()) and (not timer.get_started())):h
-                _start_time = recipe.get_active_time()
-                timer.start(int(_start_time))
-                termometer.doStay()
+          if ((termometer.get_phase_reached()) and (not timer.get_started())):
+               _start_time = recipe.get_active_time()
+               timer.start(int(_start_time))
+               termometer.doStay()
 
-          if (not recipe.get_active_continue_manual()) and timer.isFinish() and recipe.hasNextPhase():
-               if(recipe.get_active_action() > 0):
-                    beeper.beeping_on()
-               recipe.next()
-               initPhase(recipe, timer, termometer, beeper)    
-               termometer.goUp()
+          # Ist die phase zu Ende und es gibt eine nächste phase .....
+          if timer.isFinish() and recipe.hasNextPhase():        
+  
+               # ..... und der Phasenuebergang ist automatisch
+               if not recipe.get_active_continue_manual():
+                    if(recipe.get_active_action() > 0):
+                         beeper.beeping_on()
+                    recipe.next()
+                    initPhase(recipe, timer, termometer, beeper)    
+                    termometer.goUp()
 
-          if recipe.get_active_continue_manual() and timer.isFinish() and recipe.hasNextPhase():
-               if beeper.is_active():
-                    beeper.beeping_on()
-                    beeper.set_unactive()
+               # ..... und der Phasenuebergang ist manuell
+               if recipe.get_active_continue_manual():
+                    
+                    recipe.set_waiting()
+                    if beeper.is_active():
+                         beeper.beeping_on()
+                         beeper.set_unactive()
 
-               if(y == ord('c')):
-                   recipe.next()
-                   initPhase(recipe, timer, termometer, beeper)    
-                   termometer.goUp()
+                    if(y == ord('c')):
+                        recipe.next()
+                        initPhase(recipe, timer, termometer, beeper)    
+                        termometer.goUp()
           
-              
+          # die letzte Phase ist beendet    
           if timer.isFinish() and not recipe.hasNextPhase():
                timer.stop_total_time()
                
@@ -371,8 +396,8 @@ def main(args):
           screen.addstr(2, 2, "Pi-Brew")
           screen.addstr(4, 2, "Please enter a number...")
           screen.addstr(6, 4, "1 - Run recept")
-          screen.addstr(7, 4, "2 - Re-run recept")
-          screen.addstr(9, 4, "3 - Exit")
+          #screen.addstr(7, 4, "2 - Re-run recept")
+          screen.addstr(7, 4, "3 - Exit")
           screen.refresh()
 
           x = screen.getch()
@@ -381,8 +406,8 @@ def main(args):
                recipe = Recipe(config)
                show_recept(screen, recipe)
 
-          if x == ord('2'):
-              show_recept(screen, recipe)
+          #if x == ord('2'):
+          #    show_recept(screen, recipe)
 
      curses.endwin()
 
