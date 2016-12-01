@@ -284,7 +284,9 @@ def paint_screen(screen, recipe, termometer, timer, heater, beeper):
      if timer.isFinish() and not recipe.hasNextPhase():
          screen.addstr(9 + (phase_num * 2) + 2, 2, "========== DONE ==========")
 
-     screen.addstr(9 + (phase_num * 2) + 4, 2, "Please enter '0' to exit")
+     screen.addstr(9 + (phase_num * 2) + 4, 2, "Please enter '0' to exit.")
+     if beeper.is_beeping():
+         screen.addstr(9 + (phase_num * 2) + 4, 30, "To stop beeper hit <SPACE>.")
      screen.refresh()
 
 def initPhase(recipe, timer, termometer):
@@ -311,16 +313,16 @@ def show_recept(screen, recipe):
           if(y == ord(' ')):
                 beeper.beeping_off()
 
-          if ((termometer.get_phase_reached()) and (not timer.get_started())):
-                _start_time = recipe.get_active_time()
-                timer.start(int(_start_time))
-                termometer.doStay()
-
           if(termometer.temp_div() >= 0.0 ):           
                heater.heater_off()
           else:
                heater.heater_on()
           
+          if ((termometer.get_phase_reached()) and (not timer.get_started())):
+                _start_time = recipe.get_active_time()
+                timer.start(int(_start_time))
+                termometer.doStay()
+
           if timer.isFinish() and recipe.hasNextPhase():
                if(recipe.get_active_action() > 0):
                     beeper.beeping_on()
