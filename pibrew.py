@@ -6,7 +6,10 @@ import configparser
 import time
 
 class Timer:
-      def __init__(self):
+      def __init__(self):   
+           self.total_time = 0
+           self.total_time_runninng = 1
+           self.total_time_start = time.time()
            self.started = 0
            self.start_time = 0
            self.phase_end = 0
@@ -51,6 +54,16 @@ class Timer:
 
       def get_phase_end(self):
           return self.phase_end
+
+      def get_total_time(self):
+          if(self.total_time_runninng):
+               self.total_time = time.time() - self.total_time_start
+          return self.total_time
+
+      def stop_total_time(self):
+          self.total_time_runninng = 0
+
+     
 
 class Termometer:
       def __init__(self):
@@ -150,7 +163,7 @@ class Recipe:
 
 
       def hasNextPhase(self):
-           if self.phase_index < len(self.phases):
+           if self.phase_index < len(self.phases) - 1:
                  return 1
            else:
                  return 0
@@ -189,6 +202,10 @@ def paint_screen(screen, recipe, termometer, timer):
      screen.addstr(2, 2, "Pi-Brew")
      screen.addstr(4, 2, "Running recipe " + recipe.get_name())
      screen.addstr(4, 30, "Temperatur: " + str(termometer.sensor_temp) + " °C" )
+     screen.addstr(4, 55, "Gesammtzeit: " + getMinAndSek(int(timer.get_total_time())) + " min" )
+     if timer.isFinish() and not recipe.hasNextPhase():
+           screen.addstr(5, 30, "DONE ....." )
+
      phase_num = 0
 
      for phase in recipe.get_phases():
@@ -255,6 +272,10 @@ def show_recept(screen, recipe):
                recipe.next()
                initPhase(recipe, timer, termometer)    
                termometer.goUp()
+
+          if timer.isFinish() and not recipe.hasNextPhase():
+               timer.stop_total_time()
+
 
           paint_screen(screen, recipe, termometer, timer)
           y = screen.getch()
