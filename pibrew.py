@@ -321,7 +321,7 @@ def show_recept(screen, recipe):
           
           # Ist die Zieltemperatur erreicht und der Phasenzeit hat noch nicht begonnen,
           # DANN starte den Phasen timer
-          if ((termometer.get_phase_reached()) and (not timer.get_started())):
+          if ((termometer.get_phase_reached()) and (not timer.get_started())):h
                 _start_time = recipe.get_active_time()
                 timer.start(int(_start_time))
                 termometer.doStay()
