@@ -150,7 +150,7 @@ class Recipe:
            return self.config.getint(phase, 'temp')
 
       def get_active_continue_manual(self):
-           return self.config.get(self.get_active_phase(), 'continue_manual')
+           return self.config.getint(self.get_active_phase(), 'continue_manual')
 
       def get_continue_manual(self, phase):
            return self.config.get(phase, 'continue_manual')
@@ -289,10 +289,11 @@ def paint_screen(screen, recipe, termometer, timer, heater, beeper):
          screen.addstr(9 + (phase_num * 2) + 4, 30, "To stop beeper hit <SPACE>.")
      screen.refresh()
 
-def initPhase(recipe, timer, termometer):
+def initPhase(recipe, timer, termometer, beeper):
      timer.stop()
      temp = recipe.get_active_temp()
      termometer.start(temp)
+     beeper.set_active()
  
 def show_recept(screen, recipe):
      refresh_interval = recipe.get_refresh_interval()
@@ -303,7 +304,7 @@ def show_recept(screen, recipe):
      heater = Heater()
      beeper = Beeper()
 
-     initPhase(recipe, timer, termometer)               
+     initPhase(recipe, timer, termometer, beeper)               
      
      y = 0
 
@@ -316,21 +317,32 @@ def show_recept(screen, recipe):
           if(termometer.temp_div() >= 0.0 ):           
                heater.heater_off()
           else:
-               heater.heater_on()
+               heater.heater_on() 
           
+          # Ist die Zieltemperatur erreicht und der Phasenzeit hat noch nicht begonnen,
+          # DANN starte den Phasen timer
           if ((termometer.get_phase_reached()) and (not timer.get_started())):
                 _start_time = recipe.get_active_time()
                 timer.start(int(_start_time))
                 termometer.doStay()
 
-          if timer.isFinish() and recipe.hasNextPhase():
+          if (not recipe.get_active_continue_manual()) and timer.isFinish() and recipe.hasNextPhase():
                if(recipe.get_active_action() > 0):
                     beeper.beeping_on()
-
                recipe.next()
-               initPhase(recipe, timer, termometer)    
+               initPhase(recipe, timer, termometer, beeper)    
                termometer.goUp()
 
+          if recipe.get_active_continue_manual() and timer.isFinish() and recipe.hasNextPhase():
+               if beeper.is_active():
+                    beeper.beeping_on()
+                    beeper.set_unactive()
+
+               if(y == ord('c')):
+                   recipe.next()
+                   initPhase(recipe, timer, termometer, beeper)    
+                   termometer.goUp()
+          
               
           if timer.isFinish() and not recipe.hasNextPhase():
                timer.stop_total_time()
