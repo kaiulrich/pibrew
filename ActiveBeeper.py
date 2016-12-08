@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+
+import RPi.GPIO as GPIO
+
 class ActiveBeeper:
       def __init__(self, gpio):
            self.gpio = gpio
