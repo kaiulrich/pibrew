@@ -18,7 +18,7 @@ class RealHeater:
           GPIO.output(gpio,GPIO.LOW)
 
       def heater_toggle(self):
-          if(self.heating)
+          if(self.heating):
                 GPIO.output(gpio,GPIO.LOW)
           else:
                 GPIO.output(gpio,GPIO.HIGH)

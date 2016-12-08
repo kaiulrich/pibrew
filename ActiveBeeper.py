@@ -13,7 +13,7 @@ class ActiveBeeper:
           GPIO.output(gpio,GPIO.LOW)
 
       def beeping_toggle(self):
-          if(self.beeping)
+          if(self.beeping):
                 GPIO.output(gpio,GPIO.LOW)
           else:
                 GPIO.output(gpio,GPIO.HIGH)
