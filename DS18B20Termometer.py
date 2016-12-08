@@ -38,7 +38,7 @@ class DS18B20Termometer:
                  mytemp = float(999.9)
                f.close()
 
-               self.sensor_temp = int(mytemp[1]) / 1000
+               self.sensor_temp = round(int(mytemp[1]) / 1000, 1)
 
            except:
                 self.sensor_temp = float(999.9)
