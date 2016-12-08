@@ -199,7 +199,7 @@ def main(args):
 
                     heater_gpio = config.getint('Main', 'heater_gpio')
                     heater = RealHeater(heater_gpio)
-                    beeper_gpio = config.getint('Main', 'hbeeper_gpio')
+                    beeper_gpio = config.getint('Main', 'beeper_gpio')
                     beeper = ActiveBeeper(beeper_gpio)
                 
                recipe = Recipe(config)
