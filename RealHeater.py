@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-class SimHeater:
+class RealHeater:
       def __init__(self):
            self.heating = 0
 

@@ -11,6 +11,10 @@ from SimTermometer import SimTermometer
 from SimHeater import SimHeater
 from SimBeeper import SimBeeper
 
+from DS18B20Termometer import DS18B20Termometer
+from ActiveBeeper import ActiveBeeper
+from RealHeater import RealHeater
+
 def getMinAndSek(secs):
      minutes = int((secs % 3600 ) / 60)
      seconds = secs % 60
@@ -184,10 +188,15 @@ def main(args):
           x = screen.getch()
 
           if x == ord('1'):
-               termometer = SimTermometer()
-               heater = SimHeater()
-               beeper = SimBeeper()
-
+               if recipe.get_simulation():
+                    termometer = SimTermometer()
+                    heater = SimHeater()
+                    beeper = SimBeeper()
+               else:
+                    termometer = DS18B20Termometer()
+                    heater = RealHeater()
+                    beeper = ActiveBeeper()
+                
                recipe = Recipe(config)
                show_recept(screen, recipe, termometer, heater, beeper)
 

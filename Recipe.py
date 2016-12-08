@@ -15,6 +15,9 @@ class Recipe:
       def get_name(self):
            return self.config.get('Main', 'recipe')
 
+      def get_simulation(self):
+           return self.config.getint('Main', 'simulation')
+
       def get_refresh_interval(self):
            return self.config.getint('Main', 'refresh_interval')
 
