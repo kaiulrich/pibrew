@@ -35,16 +35,16 @@ class DS18B20Termometer:
                  line = f.readline() # read 2nd line
                  mytemp = line.rsplit('t=',1)
                else:
-                 mytemp = 99999
+                 mytemp = float(999.9)
                f.close()
 
-               self.sensor_temp = float(mytemp[1])
+               self.sensor_temp = int(mytemp[1]) / 1000
 
            except:
-                self.sensor_temp = float(99999)
+                self.sensor_temp = float(999.9)
 
       def temp_div(self):
-           return self.sensor_temp - self.phase_temp
+           return round(self.sensor_temp - self.phase_temp, 1)
 
 
 
