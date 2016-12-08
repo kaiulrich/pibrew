@@ -2,7 +2,7 @@
 
 
 class SimBeeper:
-      def __init__(self):
+      def __init__(self, gpio):
            self.beeping = 0
            self.active = 1
 

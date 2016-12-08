@@ -1,15 +1,23 @@
 class ActiveBeeper:
-      def __init__(self):
+      def __init__(self, gpio):
+           self.gpio = gpio
            self.beeping = 0
            self.active = 1
 
       def beeping_on(self):
            self.beeping = 1
+           GPIO.output(gpio,GPIO.HIGH)
 
       def beeping_off(self):
           self.beeping = 0
+          GPIO.output(gpio,GPIO.LOW)
 
       def beeping_toggle(self):
+          if(self.beeping)
+                GPIO.output(gpio,GPIO.LOW)
+          else:
+                GPIO.output(gpio,GPIO.HIGH)
+
           self.beeping = not self.beeping
 
       def set_unactive(self):

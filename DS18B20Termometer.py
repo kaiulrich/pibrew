@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 class DS18B20Termometer:
-      def __init__(self):
+      def __init__(self, sensor):
+          self.sensor = sensor
           self.up = 1
           self.phase_reached = 0
           self.sensor_temp = 43.0
@@ -24,10 +25,9 @@ class DS18B20Termometer:
       def read_sensor_temp(self):
 
            try:
-               id = '28-000001de3702'
                mytemp = ''
                filename = 'w1_slave'
-               f = open('/sys/bus/w1/devices/' + id + '/' + filename, 'r')
+               f = open('/sys/bus/w1/devices/' + sensor, 'r')
                line = f.readline() # read 1st line
                crc = line.rsplit(' ',1)
                crc = crc[1].replace('\n', '')

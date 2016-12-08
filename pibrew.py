@@ -190,13 +190,17 @@ def main(args):
 
           if x == ord('1'):
                if recipe.get_simulation():
-                    termometer = SimTermometer()
+                    termometer = SimTermometer('')
                     heater = SimHeater()
                     beeper = SimBeeper()
                else:
-                    termometer = DS18B20Termometer()
-                    heater = RealHeater()
-                    beeper = ActiveBeeper()
+                    sensor = config.get('Main', 'temp_sensor')
+                    termometer = DS18B20Termometer(sensor)
+
+                    heater_gpio = config.get('Main', 'heater_gpio')
+                    heater = RealHeater(heater_gpio)
+                    beeper_gpio = config.get('Main', 'hbeeper_gpio')
+                    beeper = ActiveBeeper(beeper_gpio)
                 
                recipe = Recipe(config)
                show_recept(screen, recipe, termometer, heater, beeper)

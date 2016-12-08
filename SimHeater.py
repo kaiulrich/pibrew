@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 class SimHeater:
-      def __init__(self):
+      def __init__(self, gpio):
            self.heating = 0
 
       def heater_on(self):
