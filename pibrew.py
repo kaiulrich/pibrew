@@ -197,9 +197,9 @@ def main(args):
                     sensor = config.get('Main', 'temp_sensor')
                     termometer = DS18B20Termometer(sensor)
 
-                    heater_gpio = config.get('Main', 'heater_gpio')
+                    heater_gpio = config.getint('Main', 'heater_gpio')
                     heater = RealHeater(heater_gpio)
-                    beeper_gpio = config.get('Main', 'hbeeper_gpio')
+                    beeper_gpio = config.getint('Main', 'hbeeper_gpio')
                     beeper = ActiveBeeper(beeper_gpio)
                 
                recipe = Recipe(config)
