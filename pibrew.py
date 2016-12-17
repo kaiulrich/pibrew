@@ -206,7 +206,7 @@ def main(args):
                     termometer = DS18B20Termometer(sensor)
                     heater = RealHeater(heater_gpio)
                     beeper = ActiveBeeper(beeper_gpio)
-                    atexit.register(cleanupGPIO(heater, beeper))
+                    atexit.register(cleanupGPIO, heater, beeper)
                 
                recipe = Recipe(config)
                show_recept(screen, recipe, termometer, heater, beeper)
