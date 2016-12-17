@@ -7,6 +7,9 @@ class ActiveBeeper:
            self.gpio = gpio
            self.beeping = 0
            self.active = 1
+           GPIO.setmode(GPIO.BCM)
+           GPIO.setwarnings(False)
+           GPIO.setup(self.gpio,GPIO.OUT)
 
       def beeping_on(self):
            self.beeping = 1
