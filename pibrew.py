@@ -167,7 +167,14 @@ def show_recept(screen, recipe, termometer, heater, beeper):
 def main(args):
      config = configparser.ConfigParser()
      config.read('pibrew.ini')
+     sensor = config.get('Main', 'temp_sensor')
+     heater_gpio = config.getint('Main', 'heater_gpio')
+     beeper_gpio = config.getint('Main', 'beeper_gpio')
+     termometer = SimTermometer(sensor)
+     heater = SimHeater( heater_gpio)
+     beeper = SimBeeper(beeper_gpio)
      recipe = Recipe(config)
+
      x = 0
      while x != ord('3'):
           screen = curses.initscr()
@@ -190,11 +197,7 @@ def main(args):
                sensor = config.get('Main', 'temp_sensor')
                heater_gpio = config.getint('Main', 'heater_gpio')
                beeper_gpio = config.getint('Main', 'beeper_gpio')
-               if recipe.get_simulation():
-                    termometer = SimTermometer(sensor)
-                    heater = SimHeater( heater_gpio)
-                    beeper = SimBeeper(beeper_gpio)
-               else:
+               if not recipe.get_simulation():
                     from DS18B20Termometer import DS18B20Termometer
                     from ActiveBeeper import ActiveBeeper
                     from RealHeater import RealHeater
@@ -208,7 +211,8 @@ def main(args):
 
           #if x == ord('2'):
           #    show_recept(screen, recipe)
-
+     heater.heater_off()
+     beeper.beeping_off()
      curses.endwin()
 
 curses.wrapper(main)
