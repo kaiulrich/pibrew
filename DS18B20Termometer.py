@@ -39,6 +39,8 @@ class DS18B20Termometer:
                f.close()
 
                self.sensor_temp = round(int(mytemp[1]) / 1000, 1)
+			if(not self.phase_reached and self.sensor_temp >= self.phase_temp):
+                self.phase_reached = 1
 
            except:
                 self.sensor_temp = float(999.9)
