@@ -208,6 +208,8 @@ def main(args):
                 
                recipe = Recipe(config)
                show_recept(screen, recipe, termometer, heater, beeper)
+               heater.heater_off()
+               beeper.beeping_off()
 
           #if x == ord('2'):
           #    show_recept(screen, recipe)
