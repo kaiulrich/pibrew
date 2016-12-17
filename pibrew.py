@@ -12,9 +12,7 @@ from SimHeater import SimHeater
 from SimBeeper import SimBeeper
 
 
-from DS18B20Termometer import DS18B20Termometer
-from ActiveBeeper import ActiveBeeper
-from RealHeater import RealHeater
+
 
 def getMinAndSek(secs):
      minutes = int((secs % 3600 ) / 60)
@@ -189,18 +187,21 @@ def main(args):
           x = screen.getch()
 
           if x == ord('1'):
+               sensor = config.get('Main', 'temp_sensor')
+               heater_gpio = config.getint('Main', 'heater_gpio')
+               beeper_gpio = config.getint('Main', 'beeper_gpio')
                if recipe.get_simulation():
-                    termometer = SimTermometer('')
-                    heater = SimHeater()
-                    beeper = SimBeeper()
+                    termometer = SimTermometer(sensor)
+                    heater = SimHeater( heater_gpio)
+                    beeper = SimBeeper(beeper_gpio)
                else:
-                    sensor = config.get('Main', 'temp_sensor')
-                    termometer = DS18B20Termometer(sensor)
+                    from DS18B20Termometer import DS18B20Termometer
+                    from ActiveBeeper import ActiveBeeper
+                    from RealHeater import RealHeater
 
-                    heater_gpio = config.getint('Main', 'heater_gpio')
+                    termometer = DS18B20Termometer(sensor)
                     heater = RealHeater(heater_gpio)
-                    beeper_gpio = config.getint('Main', 'beeper_gpio')
-                    beeper = ActiveBeeper(beeper_gpio)
+                    beeper = ActiveBeeper(beeper_gpio)3
                 
                recipe = Recipe(config)
                show_recept(screen, recipe, termometer, heater, beeper)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 class SimTermometer:
-      def __init__(self):
+      def __init__(self, sensor):
           self.up = 1
           self.phase_reached = 0
           self.sensor_temp = 43.0

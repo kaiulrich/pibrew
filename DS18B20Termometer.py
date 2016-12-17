@@ -27,7 +27,7 @@ class DS18B20Termometer:
            try:
                mytemp = ''
                filename = 'w1_slave'
-               f = open('/sys/bus/w1/devices/' + sensor, 'r')
+               f = open('/sys/bus/w1/devices/' + sensor + '/w1_slave', 'r')
                line = f.readline() # read 1st line
                crc = line.rsplit(' ',1)
                crc = crc[1].replace('\n', '')
